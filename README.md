@@ -1,6 +1,13 @@
-# Project Demo
+# Hayroo Project Demo
 
 [![Alt text](https://img.youtube.com/vi/lXk14qt2D28/0.jpg)](https://www.youtube.com/watch?v=lXk14qt2D28)
+
+# 🎥 Learn FullStack Development by building a LMS With React, NodeJs, PostgreSQL, Redis & Deployment -> Watch here: 
+- ▶️ Part 1: [https://youtu.be/942PSbDTXgo](https://youtu.be/942PSbDTXgo)
+- ▶️ Part 2: [https://youtu.be/7qP-xAnQhLc](https://youtu.be/7qP-xAnQhLc)
+- ▶️ Part 3: [https://youtu.be/TH5K2ebqar8](https://youtu.be/TH5K2ebqar8)
+- ▶️ Final Part: [https://youtu.be/\_-w6VZlO30Y](https://youtu.be/_-w6VZlO30Y)
+- ▶️ Deployment: [https://youtu.be/IVfM_tpFlUc](https://youtu.be/IVfM_tpFlUc)
 
 ## Getting Started
 
