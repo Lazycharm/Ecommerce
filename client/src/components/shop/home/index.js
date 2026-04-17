@@ -1,6 +1,5 @@
 import React, { Fragment, createContext, useReducer, useContext, useRef, useState, useEffect } from "react";
 import { useHistory } from "react-router-dom";
-import { motion } from "framer-motion";
 import Layout from "../layout";
 import Slider from "./Slider";
 import ProductCategory from "./ProductCategory";
@@ -9,17 +8,9 @@ import SingleProduct from "./SingleProduct";
 
 export const HomeContext = createContext();
 
-// ─── Reusable fade-in-on-scroll wrapper ────────────────────────────────────
+// ─── Reusable fade-in-on-scroll wrapper (CSS-only) ────────────────────────
 const FadeIn = ({ children, delay = 0, className = "" }) => (
-  <motion.div
-    className={className}
-    initial={{ opacity: 0, y: 32 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-60px" }}
-    transition={{ duration: 0.55, delay, ease: "easeOut" }}
-  >
-    {children}
-  </motion.div>
+  <div className={className}>{children}</div>
 );
 
 // ─── Section heading ────────────────────────────────────────────────────────
@@ -55,13 +46,8 @@ const TrustStrip = () => (
   <div className="bg-white border-y border-gray-100">
     <div className="max-w-6xl mx-auto px-6 py-5 grid grid-cols-2 md:grid-cols-4 gap-4">
       {TRUST_ITEMS.map((item, i) => (
-        <motion.div
+        <div
           key={item.title}
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: i * 0.08, duration: 0.4 }}
-          whileHover={{ y: -3 }}
           className="flex items-center space-x-3 py-2 px-3 rounded-xl hover:bg-gray-50 transition-colors duration-200"
         >
           <div className="text-yellow-500 flex-shrink-0">{item.icon}</div>
@@ -69,7 +55,7 @@ const TrustStrip = () => (
             <div className="font-semibold text-gray-900 text-sm">{item.title}</div>
             <div className="text-xs text-gray-500">{item.sub}</div>
           </div>
-        </motion.div>
+        </div>
       ))}
     </div>
   </div>
@@ -92,13 +78,8 @@ const FeaturedCategories = () => {
       <SectionHeading title="Shop by Category" sub="Explore our carefully curated collections" />
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {CATEGORIES.map((cat, i) => (
-          <motion.div
+          <div
             key={cat.name}
-            initial={{ opacity: 0, scale: 0.94 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.07, duration: 0.4 }}
-            whileHover={{ y: -6 }}
             className="relative overflow-hidden rounded-2xl cursor-pointer group shadow-sm"
             style={{ paddingBottom: "110%", position: "relative" }}
             onClick={() => history.push("/")}
@@ -113,7 +94,7 @@ const FeaturedCategories = () => {
             <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
               <p className="font-semibold text-sm leading-tight">{cat.name}</p>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </section>
@@ -165,12 +146,8 @@ const TrendingSlider = () => {
           {trending.map((item, i) => {
             const discounted = item.pOffer ? (item.pPrice - (item.pPrice * parseInt(item.pOffer)) / 100).toFixed(0) : null;
             return (
-              <motion.div
+              <div
                 key={item._id}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: Math.min(i * 0.05, 0.4) }}
                 className="flex-none w-52 snap-start group cursor-pointer"
                 onClick={() => history.push(`/products/${item._id}`)}
               >
@@ -203,7 +180,7 @@ const TrendingSlider = () => {
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
         </div>
@@ -268,13 +245,8 @@ const FlashSale = () => {
         {saleItems.map((item, i) => {
           const discounted = (item.pPrice - (item.pPrice * parseInt(item.pOffer)) / 100).toFixed(0);
           return (
-            <motion.div
+            <div
               key={item._id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-              whileHover={{ y: -4 }}
               className="group cursor-pointer bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all duration-300"
               onClick={() => history.push(`/products/${item._id}`)}
             >
@@ -300,7 +272,7 @@ const FlashSale = () => {
                 </div>
                 <p className="text-xs text-gray-400 mt-1">{item.pSold} sold</p>
               </div>
-            </motion.div>
+            </div>
           );
         })}
       </div>
@@ -328,12 +300,8 @@ const BestSellers = () => {
           {best.map((item, i) => {
             const discounted = item.pOffer ? (item.pPrice - (item.pPrice * parseInt(item.pOffer)) / 100).toFixed(0) : null;
             return (
-              <motion.div
+              <div
                 key={item._id}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06 }}
                 className="group cursor-pointer"
                 onClick={() => history.push(`/products/${item._id}`)}
               >
@@ -381,7 +349,7 @@ const BestSellers = () => {
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
         </div>
@@ -430,12 +398,8 @@ const Testimonials = () => (
     <SectionHeading badge="Reviews" title="Trusted by 5,000+ Customers" sub="Here's what our community is saying" />
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {REVIEWS.map((r, i) => (
-        <motion.div
+        <div
           key={r.name}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: i * 0.1 }}
           className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
         >
           <div className="flex items-center space-x-1 mb-3">
@@ -452,7 +416,7 @@ const Testimonials = () => (
             </div>
             <span className="font-semibold text-gray-800 text-sm">{r.name}</span>
           </div>
-        </motion.div>
+        </div>
       ))}
     </div>
   </section>
@@ -472,9 +436,9 @@ const Newsletter = () => {
           <h2 className="text-2xl md:text-3xl font-bold mb-2">Get 10% Off Your First Order</h2>
           <p className="text-gray-400 text-sm mb-8">Join 5,000+ subscribers and be first to hear about new arrivals and exclusive deals.</p>
           {submitted ? (
-            <motion.p initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="text-yellow-400 font-semibold text-lg">
+            <p>
               🎉 You're in! Check your inbox for your discount code.
-            </motion.p>
+            </p>
           ) : (
             <form
               onSubmit={(e) => { e.preventDefault(); if (email) setSubmitted(true); }}
