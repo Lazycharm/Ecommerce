@@ -4,6 +4,11 @@ import { editProduct, getAllProduct } from "./FetchApi";
 import { getAllCategory } from "../categories/FetchApi";
 const apiURL = process.env.REACT_APP_API_URL;
 
+const imgSrc = (path) =>
+  path && path.startsWith("http")
+    ? path
+    : `${apiURL}/uploads/products/${path}`;
+
 const EditProductModal = (props) => {
   const { data, dispatch } = useContext(ProductContext);
 
@@ -200,26 +205,33 @@ const EditProductModal = (props) => {
                 rows={2}
               />
             </div>
-            {/* Most Important part for uploading multiple image */}
+            {/* Image replace section */}
             <div className="flex flex-col mt-4">
-              <label htmlFor="image">Product Images *</label>
-              {editformData.pImages ? (
-                <div className="flex space-x-1">
-                  <img
-                    className="h-16 w-16 object-cover"
-                    src={`${apiURL}/uploads/products/${editformData.pImages[0]}`}
-                    alt="productImage"
-                  />
-                  <img
-                    className="h-16 w-16 object-cover"
-                    src={`${apiURL}/uploads/products/${editformData.pImages[1]}`}
-                    alt="productImage"
-                  />
+              <label htmlFor="image" className="font-medium mb-1">Product Images</label>
+              {editformData.pImages && editformData.pImages.length > 0 ? (
+                <div className="flex space-x-2 mb-2">
+                  {editformData.pImages.map((img, i) => (
+                    img ? (
+                      <div key={i} className="relative">
+                        <img
+                          className="h-20 w-20 object-cover rounded border"
+                          src={imgSrc(img)}
+                          alt={`Product image ${i + 1}`}
+                          onError={(e) => { e.target.style.display = "none"; }}
+                        />
+                        <span className="absolute top-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 rounded-br">
+                          {i + 1}
+                        </span>
+                      </div>
+                    ) : null
+                  ))}
                 </div>
               ) : (
-                ""
+                <p className="text-sm text-gray-400 mb-2">No current images</p>
               )}
-              <span className="text-gray-600 text-xs">Must need 2 images</span>
+              <p className="text-xs text-gray-500 mb-1">
+                Upload 2 new images to replace the current ones (JPG/PNG)
+              </p>
               <input
                 onChange={(e) =>
                   setEditformdata({
@@ -235,8 +247,12 @@ const EditProductModal = (props) => {
                 id="image"
                 multiple
               />
+              {editformData.pEditImages && (
+                <p className="text-xs text-green-600 mt-1">
+                  ✓ {editformData.pEditImages.length} new image(s) selected — will replace current on save
+                </p>
+              )}
             </div>
-            {/* Most Important part for uploading multiple image */}
             <div className="flex space-x-1 py-4">
               <div className="w-1/2 flex flex-col space-y-1">
                 <label htmlFor="status">Product Status *</label>
