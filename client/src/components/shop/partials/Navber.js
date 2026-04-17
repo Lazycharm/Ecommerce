@@ -1,4 +1,4 @@
-import React, { Fragment, useContext } from "react";
+import React, { Fragment, useContext, useState, useEffect } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import "./style.css";
 
@@ -9,8 +9,15 @@ import { isAdmin } from "../auth/fetchApi";
 const Navber = (props) => {
   const history = useHistory();
   const location = useLocation();
-
   const { data, dispatch } = useContext(LayoutContext);
+
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const navberToggleOpen = () =>
     data.navberHamburger
@@ -27,370 +34,189 @@ const Navber = (props) => {
       ? dispatch({ type: "cartModalToggle", payload: false })
       : dispatch({ type: "cartModalToggle", payload: true });
 
+  const cartCount = data.cartProduct !== null ? data.cartProduct.length : 0;
+
   return (
     <Fragment>
-      {/* Navber Section */}
-      <nav className="fixed top-0 w-full z-20 shadow-lg lg:shadow-none bg-white">
-        <div className="m-4 md:mx-12 md:my-6 grid grid-cols-4 lg:grid-cols-3">
-          <div className="hidden lg:block col-span-1 flex text-gray-600 mt-1">
-            <span
-              className="hover:bg-gray-200 px-4 py-3 rounded-lg font-light tracking-widest hover:text-gray-800 cursor-pointer"
-              onClick={(e) => history.push("/")}
-            >
-              Shop
-            </span>
-            <span
-              className="hover:bg-gray-200 px-4 py-3 rounded-lg font-light tracking-widest hover:text-gray-800 cursor-pointer"
-              onClick={(e) => history.push("/blog")}
-            >
-              Blog
-            </span>
-            <span
-              className="hover:bg-gray-200 px-4 py-3 rounded-lg font-light tracking-widest hover:text-gray-800 cursor-pointer"
-              onClick={(e) => history.push("/contact-us")}
-            >
-              Contact us
-            </span>
+      <nav
+        className={`fixed top-0 w-full z-20 bg-white transition-all duration-300 ${
+          scrolled ? "shadow-md" : "shadow-sm"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
+          {/* Left: Desktop nav links */}
+          <div className="hidden lg:flex items-center space-x-1 text-sm text-gray-600 font-medium">
+            {[
+              { label: "Shop", path: "/" },
+              { label: "Blog", path: "/blog" },
+              { label: "Contact", path: "/contact-us" },
+            ].map((link) => (
+              <span
+                key={link.path}
+                onClick={() => history.push(link.path)}
+                className={`px-4 py-2 rounded-lg cursor-pointer tracking-wide transition-colors duration-150 ${
+                  location.pathname === link.path
+                    ? "bg-gray-100 text-gray-900 font-semibold"
+                    : "hover:bg-gray-100 hover:text-gray-900"
+                }`}
+              >
+                {link.label}
+              </span>
+            ))}
           </div>
-          <div className="col-span-2 lg:hidden flex justify-items-stretch	 items-center">
-            <svg
-              onClick={(e) => navberToggleOpen()}
-              className="col-span-1 lg:hidden w-8 h-8 cursor-pointer text-gray-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
+
+          {/* Mobile: hamburger + logo */}
+          <div className="flex lg:hidden items-center space-x-2">
+            <button
+              onClick={navberToggleOpen}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="Menu"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
+              <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
             <span
-              onClick={(e) => history.push("/")}
-              style={{ letterSpacing: "0.10rem" }}
-              className="flex items-left text-center font-bold uppercase text-gray-800 text-2xl cursor-pointer px-2 text-center"
+              onClick={() => history.push("/")}
+              className="font-bold uppercase text-gray-900 text-xl tracking-widest cursor-pointer"
             >
               Hayroo
             </span>
           </div>
+
+          {/* Center: Logo (desktop) */}
           <div
-            onClick={(e) => history.push("/")}
-            style={{ letterSpacing: "0.70rem" }}
-            className="hidden lg:block flex items-left col-span-1 text-center text-gray-800 font-bold tracking-widest uppercase text-2xl cursor-pointer"
+            onClick={() => history.push("/")}
+            className="hidden lg:block font-bold uppercase text-gray-900 text-2xl tracking-widest cursor-pointer select-none"
           >
             Hayroo
           </div>
-          <div className="flex items-right col-span-2 lg:col-span-1 flex justify-end">
-            {/*  WishList Page Button */}
-            <div
-              onClick={(e) => history.push("/wish-list")}
-              className="hover:bg-gray-200 rounded-lg px-2 py-2 cursor-pointer"
+
+          {/* Right: Actions */}
+          <div className="flex items-center space-x-1">
+            {/* Wishlist */}
+            <button
+              onClick={() => history.push("/wish-list")}
+              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
+                location.pathname === "/wish-list" ? "bg-gray-100" : ""
+              }`}
               title="Wishlist"
             >
-              <svg
-                className={`${
-                  location.pathname === "/wish-list"
-                    ? "fill-current text-gray-800"
-                    : ""
-                } w-8 h-8 text-gray-600 cursor-pointer`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
+              <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
-            </div>
+            </button>
+
+            {/* User */}
             {localStorage.getItem("jwt") ? (
-              <Fragment>
-                <div
-                  className="userDropdownBtn hover:bg-gray-200 px-2 py-2 rounded-lg relative"
-                  title="Logout"
-                >
-                  <svg
-                    className="cursor-pointer w-8 h-8 text-gray-600 hover:text-gray-800"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <div className="userDropdown absolute right-0 mt-1 bg-gray-200 rounded">
-                    {!isAdmin() ? (
-                      <Fragment>
-                        <li className="flex flex-col text-gray-700 w-48 shadow-lg">
-                          <span
-                            onClick={(e) => history.push("/user/orders")}
-                            className="flex space-x-2 py-2 px-8 hover:bg-gray-400 cursor-pointer"
-                          >
-                            <span>
-                              <svg
-                                className="w-6 h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                              </svg>
-                            </span>
-                            <span>My Orders</span>
-                          </span>
-                          <span
-                            onClick={(e) => history.push("/user/profile")}
-                            className="flex space-x-2 py-2 px-8 hover:bg-gray-400 cursor-pointer"
-                          >
-                            <span>
-                              <svg
-                                className="w-6 h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                />
-                              </svg>
-                            </span>
-                            <span>My Account</span>
-                          </span>
-                          <span
-                            onClick={(e) => history.push("/wish-list")}
-                            className="flex space-x-2 py-2 px-8 hover:bg-gray-400 cursor-pointer"
-                          >
-                            <span>
-                              <svg
-                                className="w-6 h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                                />
-                              </svg>
-                            </span>
-                            <span>My Wishlist</span>
-                          </span>
-                          <span
-                            onClick={(e) => history.push("/user/setting")}
-                            className="flex space-x-1 py-2 px-8 hover:bg-gray-400 cursor-pointer"
-                          >
-                            <span>
-                              <svg
-                                className="w-6 h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                                />
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                              </svg>
-                            </span>
-                            <span>Setting</span>
-                          </span>
-                          <span
-                            onClick={(e) => logout()}
-                            className="flex space-x-2 py-2 px-8 hover:bg-gray-400 cursor-pointer"
-                          >
-                            <span>
-                              <svg
-                                className="w-6 h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                                />
-                              </svg>
-                            </span>
-                            <span>Logout</span>
-                          </span>
-                        </li>
-                      </Fragment>
-                    ) : (
-                      <Fragment>
-                        <li className="flex flex-col text-gray-700 w-48 shadow-lg">
-                          <span
-                            onClick={(e) => history.push("/admin/dashboard")}
-                            className="flex space-x-2 py-2 px-8 hover:bg-gray-400 cursor-pointer"
-                          >
-                            <span>
-                              <svg
-                                className="w-6 h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                                />
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                              </svg>
-                            </span>
-                            <span>Admin Panel</span>
-                          </span>
-                          <span
-                            onClick={(e) => logout()}
-                            className="flex space-x-2 py-2 px-8 hover:bg-gray-400 cursor-pointer"
-                          >
-                            <span>
-                              <svg
-                                className="w-6 h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                                />
-                              </svg>
-                            </span>
-                            <span>Logout</span>
-                          </span>
-                        </li>
-                      </Fragment>
-                    )}
-                  </div>
-                </div>
-              </Fragment>
-            ) : (
-              /* Login Modal Button */
               <div
-                onClick={(e) => loginModalOpen()}
-                className="cursor-pointer hover:bg-gray-200 px-2 py-2 rounded-lg"
+                className="userDropdownBtn relative p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                title="Account"
+              >
+                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="userDropdown absolute right-0 top-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl min-w-max overflow-hidden z-50">
+                  {!isAdmin() ? (
+                    <ul className="py-1 text-sm text-gray-700">
+                      {[
+                        { label: "My Orders", path: "/user/orders" },
+                        { label: "My Account", path: "/user/profile" },
+                        { label: "My Wishlist", path: "/wish-list" },
+                        { label: "Settings", path: "/user/setting" },
+                      ].map((item) => (
+                        <li
+                          key={item.path}
+                          onClick={() => history.push(item.path)}
+                          className="px-5 py-2.5 hover:bg-gray-50 cursor-pointer font-medium transition-colors whitespace-nowrap"
+                        >
+                          {item.label}
+                        </li>
+                      ))}
+                      <li
+                        onClick={logout}
+                        className="px-5 py-2.5 hover:bg-red-50 text-red-600 cursor-pointer font-medium border-t border-gray-100 transition-colors"
+                      >
+                        Logout
+                      </li>
+                    </ul>
+                  ) : (
+                    <ul className="py-1 text-sm text-gray-700">
+                      <li
+                        onClick={() => history.push("/admin/dashboard")}
+                        className="px-5 py-2.5 hover:bg-gray-50 cursor-pointer font-medium transition-colors whitespace-nowrap"
+                      >
+                        Admin Panel
+                      </li>
+                      <li
+                        onClick={logout}
+                        className="px-5 py-2.5 hover:bg-red-50 text-red-600 cursor-pointer font-medium border-t border-gray-100 transition-colors"
+                      >
+                        Logout
+                      </li>
+                    </ul>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={loginModalOpen}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 title="Login"
               >
-                <svg
-                  className="w-8 h-8 text-gray-600 hover:text-gray-800"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-                  />
+                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                 </svg>
-              </div>
+              </button>
             )}
-            {/* Cart Modal Button */}
-            <div
-              onClick={(e) => cartModalOpen()}
-              className="hover:bg-gray-200 px-2 py-2 rounded-lg relative cursor-pointer"
+
+            {/* Cart */}
+            <button
+              onClick={cartModalOpen}
+              className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
               title="Cart"
             >
-              <svg
-                className="w-8 h-8 text-gray-600 hover:text-gray-800"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                />
+              <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
-              <span className="absolute top-0 ml-6 mt-1 bg-yellow-700 rounded px-1 text-white text-xs hover:text-gray-200 font-semibold">
-                {data.cartProduct !== null ? data.cartProduct.length : 0}
-              </span>
-            </div>
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-yellow-400 text-gray-900 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu */}
         <div
-          className={
-            data.navberHamburger && data.navberHamburger
-              ? "px-1 pb-2 md:pb-0 md:px-10 lg:hidden"
-              : "hidden px-1 pb-2 md:pb-0 md:px-10 lg:hidden"
-          }
+          className={`${
+            data.navberHamburger ? "block" : "hidden"
+          } lg:hidden border-t border-gray-100 bg-white`}
         >
-          <div className="col-span-1 flex flex-col text-gray-600">
-            <span
-              className="font-medium text-lg tracking-widest hover:text-gray-800 hover:bg-gray-200 px-3 py-2 rounded-lg cursor-pointer"
-              onClick={(e) => history.push("/")}
-            >
-              Shop
-            </span>
-            <span
-              className="font-medium text-lg tracking-widest hover:text-gray-800 hover:bg-gray-200 px-3 py-2 rounded-lg cursor-pointer"
-              onClick={(e) => history.push("/blog")}
-            >
-              Blog
-            </span>
-            <span
-              className="font-medium text-lg tracking-widest hover:text-gray-800 hover:bg-gray-200 px-3 py-2 rounded-lg cursor-pointer"
-              onClick={(e) => history.push("/contact-us")}
-            >
-              Contact us
-            </span>
+          <div className="px-4 py-3 flex flex-col space-y-1 text-sm font-medium text-gray-700">
+            {[
+              { label: "Shop", path: "/" },
+              { label: "Blog", path: "/blog" },
+              { label: "Contact", path: "/contact-us" },
+            ].map((link) => (
+              <span
+                key={link.path}
+                onClick={() => {
+                  history.push(link.path);
+                  dispatch({ type: "hamburgerToggle", payload: false });
+                }}
+                className="px-3 py-2.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+              >
+                {link.label}
+              </span>
+            ))}
           </div>
         </div>
       </nav>
-      {/* End Navber Section */}
     </Fragment>
   );
 };
 
 export default Navber;
+import React, { Fragmen
