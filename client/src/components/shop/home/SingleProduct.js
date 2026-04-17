@@ -81,7 +81,7 @@ const SingleProduct = () => {
           return (
             <div
               key={index}
-              className="col-span-1 group"
+              className="col-span-1 group card-lift rounded-2xl"
             >
               {/* Image container */}
               <div

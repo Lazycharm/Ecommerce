@@ -8,10 +8,34 @@ import SingleProduct from "./SingleProduct";
 
 export const HomeContext = createContext();
 
-// ─── Reusable fade-in-on-scroll wrapper (CSS-only) ────────────────────────
-const FadeIn = ({ children, delay = 0, className = "" }) => (
-  <div className={className}>{children}</div>
-);
+// ─── Scroll-reveal FadeIn (IntersectionObserver) ───────────────────────────
+const FadeIn = ({ children, delay = 0, className = "" }) => {
+  const ref = React.useRef(null);
+  const [visible, setVisible] = React.useState(false);
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.12 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(28px)",
+        transition: `opacity 0.6s ease ${delay}s, transform 0.6s ease ${delay}s`,
+      }}
+    >
+      {children}
+    </div>
+  );
+};
 
 // ─── Section heading ────────────────────────────────────────────────────────
 const SectionHeading = ({ badge, title, sub }) => (
@@ -30,10 +54,10 @@ const SectionHeading = ({ badge, title, sub }) => (
 const TRUST_ITEMS = [
   { icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-    ), title: "Free Delivery", sub: "On orders over $75" },
+    ), title: "Fast UAE Delivery", sub: "Same-day Dubai & Abu Dhabi" },
   { icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-    ), title: "Secure Payment", sub: "256-bit SSL protection" },
+    ), title: "Secure Checkout", sub: "256-bit SSL protection" },
   { icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
     ), title: "24/7 Support", sub: "Always here for you" },
@@ -45,18 +69,19 @@ const TRUST_ITEMS = [
 const TrustStrip = () => (
   <div className="bg-white border-y border-gray-100">
     <div className="max-w-6xl mx-auto px-6 py-5 grid grid-cols-2 md:grid-cols-4 gap-4">
-      {TRUST_ITEMS.map((item, i) => (
-        <div
-          key={item.title}
-          className="flex items-center space-x-3 py-2 px-3 rounded-xl hover:bg-gray-50 transition-colors duration-200"
-        >
-          <div className="text-yellow-500 flex-shrink-0">{item.icon}</div>
-          <div>
-            <div className="font-semibold text-gray-900 text-sm">{item.title}</div>
-            <div className="text-xs text-gray-500">{item.sub}</div>
-          </div>
-        </div>
-      ))}
+        {TRUST_ITEMS.map((item, i) => (
+          <FadeIn
+            key={item.title}
+            delay={i * 0.08}
+            className="flex items-center space-x-3 py-2 px-3 rounded-xl hover:bg-gray-50 transition-colors duration-200"
+          >
+            <div className="text-yellow-500 flex-shrink-0">{item.icon}</div>
+            <div>
+              <div className="font-semibold text-gray-900 text-sm">{item.title}</div>
+              <div className="text-xs text-gray-500">{item.sub}</div>
+            </div>
+          </FadeIn>
+        ))}
     </div>
   </div>
 );
@@ -81,7 +106,7 @@ const FeaturedCategories = () => {
           <div
             key={cat.name}
             className="relative overflow-hidden rounded-2xl cursor-pointer group shadow-sm"
-            style={{ paddingBottom: "110%", position: "relative" }}
+            style={{ paddingBottom: "80%", position: "relative" }}
             onClick={() => history.push("/")}
           >
             <img
@@ -140,8 +165,7 @@ const TrendingSlider = () => {
         </div>
         <div
           ref={scrollRef}
-          className="flex space-x-4 overflow-x-auto pb-4 snap-x snap-mandatory"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          className="flex space-x-4 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar"
         >
           {trending.map((item, i) => {
             const discounted = item.pOffer ? (item.pPrice - (item.pPrice * parseInt(item.pOffer)) / 100).toFixed(0) : null;
@@ -300,11 +324,14 @@ const BestSellers = () => {
           {best.map((item, i) => {
             const discounted = item.pOffer ? (item.pPrice - (item.pPrice * parseInt(item.pOffer)) / 100).toFixed(0) : null;
             return (
-              <div
+              <FadeIn
                 key={item._id}
-                className="group cursor-pointer"
-                onClick={() => history.push(`/products/${item._id}`)}
+                delay={i * 0.07}
               >
+                <div
+                  className="group cursor-pointer card-lift rounded-2xl"
+                  onClick={() => history.push(`/products/${item._id}`)}
+                >
                 <div className="relative overflow-hidden rounded-2xl bg-gray-100 shadow-sm" style={{ paddingBottom: "120%" }}>
                   <img
                     loading="lazy"
@@ -330,7 +357,7 @@ const BestSellers = () => {
                   </div>
                 </div>
                 <div className="mt-3 px-1">
-                  <p className="text-sm font-medium text-gray-800 leading-snug line-clamp-1">{item.pName}</p>
+                  <p className="text-sm font-medium text-gray-800 leading-snug truncate">{item.pName}</p>
                   <div className="flex items-center mt-1">
                     {[1,2,3,4,5].map(s => (
                       <svg key={s} className="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20">
@@ -349,7 +376,8 @@ const BestSellers = () => {
                     )}
                   </div>
                 </div>
-              </div>
+                </div>
+              </FadeIn>
             );
           })}
         </div>
@@ -357,8 +385,6 @@ const BestSellers = () => {
     </section>
   );
 };
-
-// ─── Promo Banner ────────────────────────────────────────────────────────────
 const PromoBanner = () => (
   <FadeIn>
     <section className="max-w-6xl mx-auto px-6 py-8">
@@ -398,9 +424,9 @@ const Testimonials = () => (
     <SectionHeading badge="Reviews" title="Trusted by 5,000+ Customers" sub="Here's what our community is saying" />
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {REVIEWS.map((r, i) => (
+        <FadeIn key={r.name} delay={i * 0.12}>
         <div
-          key={r.name}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 h-full"
         >
           <div className="flex items-center space-x-1 mb-3">
             {[1,2,3,4,5].map(s => (
@@ -417,6 +443,7 @@ const Testimonials = () => (
             <span className="font-semibold text-gray-800 text-sm">{r.name}</span>
           </div>
         </div>
+        </FadeIn>
       ))}
     </div>
   </section>

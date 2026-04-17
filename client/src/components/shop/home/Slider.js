@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useContext, useState } from "react";
+import React, { Fragment, useEffect, useContext, useState, useRef } from "react";
 import { useHistory } from "react-router-dom";
 import OrderSuccessMessage from "./OrderSuccessMessage";
 import { HomeContext } from "./";
@@ -9,27 +9,30 @@ const apiURL = process.env.REACT_APP_API_URL;
 const STATIC_SLIDES = [
   {
     image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1600&q=80",
-    headline: "Discover Premium\nEveryday Essentials",
-    sub: "Fashion, Tech, Home — curated for modern living",
-    cta: "Shop Now",
+    headline: "Shop Smart.\nLive Better.",
+    sub: "Premium tech, fitness & lifestyle essentials — delivered fast across UAE",
+    cta: "Start Shopping",
     cta2: "Explore Categories",
     accent: "#f59e0b",
+    badge: "Trusted by 5,000+ customers",
   },
   {
     image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&q=80",
     headline: "Summer Sale\nUp to 20% Off",
-    sub: "Limited-time deals across all categories. Free shipping on orders over $75.",
+    sub: "Limited-time deals across all categories. Free UAE delivery on orders over AED 200.",
     cta: "View Sale Items",
     cta2: "All Products",
     accent: "#ef4444",
+    badge: "Limited time offer",
   },
   {
     image: "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=1600&q=80",
     headline: "Tech Essentials\nfor Modern Life",
-    sub: "Top-rated gadgets and electronics to power your world.",
+    sub: "Top-rated gadgets and electronics — shipped same day in Dubai & Abu Dhabi.",
     cta: "Shop Electronics",
     cta2: "New Arrivals",
     accent: "#3b82f6",
+    badge: "Same-day delivery available",
   },
 ];
 
@@ -38,24 +41,31 @@ const Slider = () => {
   const history = useHistory();
   const [slide, setSlide] = useState(0);
   const [animating, setAnimating] = useState(false);
+  // ref keeps current slide value accessible inside interval without stale closure
+  const slideRef = useRef(0);
+  const animatingRef = useRef(false);
+
+  const goTo = (idx) => {
+    if (animatingRef.current) return;
+    animatingRef.current = true;
+    setAnimating(true);
+    setTimeout(() => {
+      slideRef.current = idx;
+      setSlide(idx);
+      animatingRef.current = false;
+      setAnimating(false);
+    }, 400);
+  };
 
   useEffect(() => {
     sliderImages(dispatch);
     const timer = setInterval(() => {
-      goTo((prev) => (prev + 1) % STATIC_SLIDES.length);
+      const next = (slideRef.current + 1) % STATIC_SLIDES.length;
+      goTo(next);
     }, 6000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const goTo = (idxOrFn) => {
-    if (animating) return;
-    setAnimating(true);
-    setTimeout(() => {
-      setSlide(typeof idxOrFn === "function" ? idxOrFn(slide) : idxOrFn);
-      setAnimating(false);
-    }, 300);
-  };
 
   const hasDbSlides = data.sliderImages && data.sliderImages.length > 0;
 
@@ -109,7 +119,7 @@ const Slider = () => {
           style={{ opacity: animating ? 0 : 1, transform: animating ? "translateY(12px)" : "translateY(0)" }}
         >
           <span className="text-xs uppercase tracking-widest mb-4 font-semibold" style={{ color: activeSlide.accent }}>
-            Trusted by 5,000+ customers
+            {activeSlide.badge}
           </span>
           <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-5 whitespace-pre-line">
             {activeSlide.headline}
