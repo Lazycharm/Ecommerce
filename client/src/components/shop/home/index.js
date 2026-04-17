@@ -159,7 +159,7 @@ const TrendingSlider = () => {
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                    🔥 Trending
+                    <span role="img" aria-label="fire">🔥</span> Trending
                   </span>
                   {item.pOffer && (
                     <span className="absolute top-2 right-2 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-0.5 rounded-full">
@@ -224,7 +224,7 @@ const FlashSale = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
             <span className="inline-block bg-red-500 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-2">
-              ⚡ Flash Sale
+              <span role="img" aria-label="lightning">⚡</span> Flash Sale
             </span>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Today's Best Deals</h2>
           </div>
@@ -437,7 +437,7 @@ const Newsletter = () => {
           <p className="text-gray-400 text-sm mb-8">Join 5,000+ subscribers and be first to hear about new arrivals and exclusive deals.</p>
           {submitted ? (
             <p>
-              🎉 You're in! Check your inbox for your discount code.
+              <span role="img" aria-label="party">🎉</span> You're in! Check your inbox for your discount code.
             </p>
           ) : (
             <form
