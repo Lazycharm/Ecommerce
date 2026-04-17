@@ -41,10 +41,14 @@ const CategoryList = () => {
                   }
                   className="col-span-1 m-2 flex flex-col items-center justify-center space-y-2 cursor-pointer"
                 >
-                  <img
-                    src={`${apiURL}/uploads/categories/${item.cImage}`}
-                    alt="pic"
-                  />
+                  <div className="w-full overflow-hidden" style={{paddingBottom:'66%',position:'relative'}}>
+                    <img
+                      className="absolute inset-0 w-full h-full object-cover rounded"
+                      src={item.cImage && item.cImage.startsWith('http') ? item.cImage : `${apiURL}/uploads/categories/${item.cImage}`}
+                      alt={item.cName}
+                      onError={(e) => { e.target.onerror=null; e.target.src='https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&q=60'; }}
+                    />
+                  </div>
                   <div className="font-medium">{item.cName}</div>
                 </div>
               </Fragment>
