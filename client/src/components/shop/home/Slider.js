@@ -5,6 +5,7 @@ import { HomeContext } from "./";
 import { sliderImages } from "../../admin/dashboardAdmin/Action";
 
 const apiURL = process.env.REACT_APP_API_URL;
+const SLIDE_DURATION = 6000; // ms — also controls progress bar
 
 const STATIC_SLIDES = [
   {
@@ -41,9 +42,29 @@ const Slider = () => {
   const history = useHistory();
   const [slide, setSlide] = useState(0);
   const [animating, setAnimating] = useState(false);
-  // ref keeps current slide value accessible inside interval without stale closure
+  // Progress bar: resets each time slide changes
+  const [progress, setProgress] = useState(0);
   const slideRef = useRef(0);
   const animatingRef = useRef(false);
+  // Tracks current slide-count inside the autoplay interval (avoids stale closure)
+  const slideCountRef = useRef(STATIC_SLIDES.length);
+
+  // ── Unified slide array ────────────────────────────────────────────────────
+  // DB images are normalized into the same shape as STATIC_SLIDES so we have
+  // one render path for both cases. When no DB images exist, static slides are
+  // used and _isUpload stays false.
+  const dbImages = data.sliderImages || [];
+  const activeSlides =
+    dbImages.length > 0
+      ? dbImages.map((s, i) => ({
+          ...STATIC_SLIDES[i % STATIC_SLIDES.length],
+          image: `${apiURL}/uploads/customize/${s.slideImage}`,
+          _isUpload: true,
+        }))
+      : STATIC_SLIDES.map((s) => ({ ...s, _isUpload: false }));
+
+  // Keep count ref current on every render (no effect needed – runs synchronously)
+  slideCountRef.current = activeSlides.length;
 
   const goTo = (idx) => {
     if (animatingRef.current) return;
@@ -60,71 +81,102 @@ const Slider = () => {
   useEffect(() => {
     sliderImages(dispatch);
     const timer = setInterval(() => {
-      const next = (slideRef.current + 1) % STATIC_SLIDES.length;
+      // slideCountRef.current is always up-to-date even after DB images load
+      const next = (slideRef.current + 1) % slideCountRef.current;
       goTo(next);
-    }, 6000);
+    }, SLIDE_DURATION);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hasDbSlides = data.sliderImages && data.sliderImages.length > 0;
+  // Progress bar animation — resets when slide changes
+  useEffect(() => {
+    setProgress(0);
+    const start = performance.now();
+    let raf;
+    const tick = (now) => {
+      const pct = Math.min(100, ((now - start) / SLIDE_DURATION) * 100);
+      setProgress(pct);
+      if (pct < 100) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [slide]);
 
-  if (hasDbSlides) {
-    return (
-      <Fragment>
-        <div className="relative mt-16 bg-gray-900 overflow-hidden" style={{ minHeight: "500px" }}>
-          <img
-            className="w-full object-cover"
-            style={{ maxHeight: "600px", minHeight: "500px" }}
-            src={`${apiURL}/uploads/customize/${data.sliderImages[slide % data.sliderImages.length].slideImage}`}
-            alt="hero"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent flex flex-col items-start justify-center px-10 md:px-20">
-            <h1 className="text-white text-3xl md:text-5xl font-bold mb-4 leading-tight max-w-xl">
-              Discover Premium Everyday Essentials
-            </h1>
-            <p className="text-gray-200 text-lg mb-8 max-w-md">Fashion, Tech, Home — curated for modern living</p>
-            <button onClick={() => history.push("/")} className="bg-yellow-400 text-gray-900 font-bold px-8 py-3 rounded-full hover:bg-yellow-300 transition-all duration-200 shadow-lg">
-              Shop Now
-            </button>
-          </div>
-        </div>
-        <OrderSuccessMessage />
-      </Fragment>
-    );
-  }
-
-  const activeSlide = STATIC_SLIDES[slide];
+  const activeSlide = activeSlides[slide % activeSlides.length];
 
   return (
     <Fragment>
-      <div className="relative mt-16 overflow-hidden bg-gray-900" style={{ minHeight: "520px" }}>
-        {/* Background image — CSS fade transition */}
+      <div
+        className="relative mt-16 overflow-hidden bg-gray-900"
+        style={{ height: "calc(100vh - 4rem)", maxHeight: "680px", minHeight: "520px" }}
+      >
+        {/* ── Image layer ── */}
         <div
           className="absolute inset-0 transition-opacity duration-700"
           style={{ opacity: animating ? 0 : 1 }}
         >
-          <img
-            src={activeSlide.image}
-            alt={activeSlide.headline}
-            className="w-full h-full object-cover"
-            style={{ minHeight: "520px" }}
-          />
+          {activeSlide._isUpload ? (
+            /*
+             * Smart display for admin-uploaded images.
+             * Root-cause fix: uploaded images can be any aspect ratio (portrait,
+             * square, wide). Using object-cover alone on a tall container causes
+             * destructive zoom on portrait images. Solution:
+             *   1. Blurred, scaled copy fills the letterbox areas with colour.
+             *   2. The real image sits on top with object-contain — no cropping.
+             *   3. Dark overlay ensures text legibility regardless of image tone.
+             */
+            <>
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage: `url(${activeSlide.image})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  filter: "blur(28px)",
+                  transform: "scale(1.15)",
+                  opacity: 0.45,
+                }}
+              />
+              <img
+                src={activeSlide.image}
+                alt={activeSlide.headline}
+                className="relative z-10 w-full h-full object-contain"
+              />
+            </>
+          ) : (
+            /* Wide landscape Unsplash images — object-cover is optimal */
+            <img
+              src={activeSlide.image}
+              alt={activeSlide.headline}
+              className="w-full h-full object-cover"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
         </div>
 
-        {/* Hero content */}
+        {/* ── Hero content ── */}
         <div
-          className="relative z-10 flex flex-col justify-center h-full px-8 md:px-20 py-28 md:py-36 max-w-3xl transition-all duration-500"
-          style={{ opacity: animating ? 0 : 1, transform: animating ? "translateY(12px)" : "translateY(0)" }}
+          className="relative z-10 flex flex-col justify-center h-full px-6 sm:px-10 md:px-20 max-w-3xl transition-all duration-500"
+          style={{
+            opacity: animating ? 0 : 1,
+            transform: animating ? "translateY(12px)" : "translateY(0)",
+            paddingTop: "80px",
+            paddingBottom: "60px",
+          }}
         >
-          <span className="text-xs uppercase tracking-widest mb-4 font-semibold" style={{ color: activeSlide.accent }}>
+          <span
+            className="text-xs uppercase tracking-widest mb-4 font-semibold"
+            style={{ color: activeSlide.accent }}
+          >
             {activeSlide.badge}
           </span>
           <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-5 whitespace-pre-line">
             {activeSlide.headline}
           </h1>
-          <p className="text-gray-300 text-lg mb-8 max-w-lg">{activeSlide.sub}</p>
+          <p className="text-gray-300 text-lg mb-8 max-w-lg leading-relaxed">
+            {activeSlide.sub}
+          </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => history.push("/")}
@@ -134,7 +186,10 @@ const Slider = () => {
               {activeSlide.cta}
             </button>
             <button
-              onClick={() => { const el = document.getElementById("shop"); if (el) el.scrollIntoView({ behavior: "smooth" }); }}
+              onClick={() => {
+                const el = document.getElementById("shop");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }}
               className="border-2 border-white/60 text-white font-semibold px-8 py-3.5 rounded-full hover:bg-white/10 transition-all duration-200 text-sm tracking-wide"
             >
               {activeSlide.cta2}
@@ -142,28 +197,48 @@ const Slider = () => {
           </div>
         </div>
 
-        {/* Prev */}
+        {/* ── Prev ── */}
         <button
-          onClick={() => goTo((slide - 1 + STATIC_SLIDES.length) % STATIC_SLIDES.length)}
+          onClick={() => goTo((slide - 1 + activeSlides.length) % activeSlides.length)}
+          aria-label="Previous slide"
           className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/25 border border-white/20 text-white rounded-full p-3 z-10 transition-all duration-200"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        {/* Next */}
-        <button
-          onClick={() => goTo((slide + 1) % STATIC_SLIDES.length)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/25 border border-white/20 text-white rounded-full p-3 z-10 transition-all duration-200"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
         </button>
 
-        {/* Dots */}
+        {/* ── Next ── */}
+        <button
+          onClick={() => goTo((slide + 1) % activeSlides.length)}
+          aria-label="Next slide"
+          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/25 border border-white/20 text-white rounded-full p-3 z-10 transition-all duration-200"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        {/* ── Progress bar ── */}
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10 z-10">
+          <div
+            className="h-full bg-yellow-400"
+            style={{ width: `${progress}%`, transition: "width 0.1s linear" }}
+          />
+        </div>
+
+        {/* ── Dots ── */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2 z-10">
-          {STATIC_SLIDES.map((_, i) => (
+          {activeSlides.map((_, i) => (
             <button
               key={i}
               onClick={() => goTo(i)}
-              className={`transition-all duration-300 rounded-full ${i === slide ? "w-6 h-2 bg-yellow-400" : "w-2 h-2 bg-white/40 hover:bg-white/70"}`}
+              aria-label={`Go to slide ${i + 1}`}
+              className={`transition-all duration-300 rounded-full ${
+                i === slide
+                  ? "w-6 h-2.5 bg-yellow-400"
+                  : "w-2.5 h-2.5 bg-white/40 hover:bg-white/70"
+              }`}
             />
           ))}
         </div>

@@ -9,7 +9,7 @@ import SingleProduct from "./SingleProduct";
 export const HomeContext = createContext();
 
 // ─── Scroll-reveal FadeIn (IntersectionObserver) ───────────────────────────
-const FadeIn = ({ children, delay = 0, className = "" }) => {
+const FadeIn = ({ children, delay = 0, className = "", direction = "up" }) => {
   const ref = React.useRef(null);
   const [visible, setVisible] = React.useState(false);
   React.useEffect(() => {
@@ -17,19 +17,29 @@ const FadeIn = ({ children, delay = 0, className = "" }) => {
     if (!el) return;
     const obs = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold: 0.12 }
+      { threshold: 0.1 }
     );
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
+
+  const transforms = {
+    up:    visible ? "translateY(0)"  : "translateY(24px)",
+    down:  visible ? "translateY(0)"  : "translateY(-24px)",
+    left:  visible ? "translateX(0)"  : "translateX(24px)",
+    right: visible ? "translateX(0)"  : "translateX(-24px)",
+    none:  "none",
+  };
+
   return (
     <div
       ref={ref}
       className={className}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(28px)",
-        transition: `opacity 0.6s ease ${delay}s, transform 0.6s ease ${delay}s`,
+        transform: transforms[direction] || transforms.up,
+        transition: `opacity 0.55s ease ${delay}s, transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}s`,
+        willChange: "opacity, transform",
       }}
     >
       {children}
@@ -41,12 +51,12 @@ const FadeIn = ({ children, delay = 0, className = "" }) => {
 const SectionHeading = ({ badge, title, sub }) => (
   <FadeIn className="text-center mb-10">
     {badge && (
-      <span className="inline-block bg-yellow-400 text-gray-900 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">
+      <span className="badge-section badge-top mb-3">
         {badge}
       </span>
     )}
-    <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{title}</h2>
-    {sub && <p className="text-gray-500 mt-2 text-sm">{sub}</p>}
+    <h2 className="heading-lg">{title}</h2>
+    {sub && <p className="body-muted mt-2">{sub}</p>}
   </FadeIn>
 );
 
@@ -99,7 +109,7 @@ const CATEGORIES = [
 const FeaturedCategories = () => {
   const history = useHistory();
   return (
-    <section className="max-w-6xl mx-auto px-6 py-14">
+    <section className="max-w-6xl mx-auto px-6 py-16">
       <SectionHeading title="Shop by Category" sub="Explore our carefully curated collections" />
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {CATEGORIES.map((cat, i) => (
@@ -151,8 +161,8 @@ const TrendingSlider = () => {
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex items-center justify-between mb-8">
           <FadeIn>
-            <span className="inline-block bg-yellow-400 text-gray-900 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-2">Hot Right Now</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Trending Products</h2>
+            <span className="badge-section badge-top mb-2">Hot Right Now</span>
+            <h2 className="heading-lg mt-1">Trending Products</h2>
           </FadeIn>
           <div className="flex space-x-2">
             <button onClick={() => scroll(-1)} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-600 hover:bg-gray-900 hover:text-white transition-all duration-200">
@@ -182,11 +192,11 @@ const TrendingSlider = () => {
                     alt={item.pName}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                    <span role="img" aria-label="fire">🔥</span> Trending
+                  <span className="badge-product badge-hot absolute top-2 left-2">
+                    <span role="img" aria-label="fire">🔥</span>&nbsp;Trending
                   </span>
                   {item.pOffer && (
-                    <span className="absolute top-2 right-2 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-0.5 rounded-full">
+                    <span className="badge-product badge-sale absolute top-2 right-2">
                       -{item.pOffer}%
                     </span>
                   )}
@@ -247,10 +257,10 @@ const FlashSale = () => {
       <FadeIn>
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
-            <span className="inline-block bg-red-500 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-2">
-              <span role="img" aria-label="lightning">⚡</span> Flash Sale
+            <span className="badge-section badge-flash mb-2">
+              <span role="img" aria-label="lightning">⚡</span>&nbsp;Flash Sale
             </span>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Today's Best Deals</h2>
+            <h2 className="heading-lg mt-1">Today's Best Deals</h2>
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500 mr-1">Ends in:</span>
@@ -281,7 +291,7 @@ const FlashSale = () => {
                   alt={item.pName}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                <div className="badge-product badge-flash absolute top-2 left-2">
                   -{item.pOffer}%
                 </div>
               </div>
@@ -299,6 +309,101 @@ const FlashSale = () => {
             </div>
           );
         })}
+      </div>
+    </section>
+  );
+};
+
+// ─── Special Deals / Coupon Section ─────────────────────────────────────────
+const DEALS = [
+  {
+    icon: "🎁",
+    title: "15% Off Orders AED 300+",
+    desc: "Spend AED 300 or more and save 15% — discount applied automatically at checkout.",
+    tag: "Auto-Applied",
+    cardClass: "deals-card-violet",
+    cta: "Shop Now",
+  },
+  {
+    icon: "🚀",
+    title: "Free Express Delivery — This Week",
+    desc: "No minimum spend. All UAE destinations. Same-day available in Dubai & Abu Dhabi.",
+    tag: "This Week Only",
+    cardClass: "deals-card-orange",
+    cta: "Start Shopping",
+  },
+  {
+    icon: "✨",
+    title: "Buy 2, Get 1 Free",
+    desc: "Mix and match across all accessories and lifestyle products. Add 3 to cart, 1 is free.",
+    tag: "Bundle Deal",
+    cardClass: "deals-card-blue",
+    cta: "Explore Accessories",
+  },
+];
+
+const SpecialDeals = () => {
+  const history = useHistory();
+  return (
+    <section className="bg-gray-900 py-16">
+      <div className="max-w-6xl mx-auto px-6">
+        {/* Section header */}
+        <FadeIn className="text-center mb-12">
+          <span className="badge-section badge-top mb-3">Exclusive for You</span>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mt-1">Unlock Special Offers</h2>
+          <p className="text-gray-400 mt-2 text-sm">Deals that work harder so you save more</p>
+        </FadeIn>
+
+        {/* Offer cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+          {DEALS.map((deal, i) => (
+            <FadeIn key={deal.title} delay={i * 0.1}>
+              <div className={`deals-card ${deal.cardClass} h-full flex flex-col`}>
+                {/* Tag pill */}
+                <div className="flex items-start justify-between mb-5">
+                  <span className="text-3xl leading-none">{deal.icon}</span>
+                  <span className="badge-product badge-dark ml-3">{deal.tag}</span>
+                </div>
+
+                {/* Content */}
+                <h3 className="text-white font-bold text-base leading-snug mb-2 flex-1">
+                  {deal.title}
+                </h3>
+                <p className="text-gray-400 text-sm leading-relaxed mb-6">{deal.desc}</p>
+
+                {/* CTA */}
+                <button
+                  onClick={() => history.push("/")}
+                  className="group flex items-center space-x-2 text-sm font-bold text-yellow-400 hover:text-yellow-300 transition-colors"
+                >
+                  <span>{deal.cta}</span>
+                  <svg
+                    className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </FadeIn>
+          ))}
+        </div>
+
+        {/* Claim all CTA */}
+        <FadeIn className="text-center">
+          <button
+            onClick={() => history.push("/")}
+            className="inline-flex items-center space-x-2 bg-yellow-400 text-gray-900 font-bold px-9 py-3.5 rounded-full hover:bg-yellow-300 transition-all duration-200 shadow-xl text-sm tracking-wide"
+            style={{ boxShadow: "0 8px 28px rgba(245,158,11,0.3)" }}
+          >
+            <span>Claim All Offers</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </button>
+        </FadeIn>
       </div>
     </section>
   );
@@ -340,12 +445,12 @@ const BestSellers = () => {
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   {item.pOffer && (
-                    <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    <span className="badge-product badge-sale absolute top-2 left-2">
                       -{item.pOffer}%
                     </span>
                   )}
                   {i === 0 && (
-                    <span className="absolute top-2 right-2 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-0.5 rounded-full">
+                    <span className="badge-product badge-top absolute top-2 right-2">
                       #1
                     </span>
                   )}
@@ -398,7 +503,7 @@ const PromoBanner = () => (
       >
         <div className="absolute inset-0 bg-gradient-to-r from-gray-900/80 via-gray-900/60 to-gray-900/40" />
         <div className="relative z-10 max-w-lg mx-auto">
-          <span className="inline-block bg-red-500 text-white text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-4">
+          <span className="badge-section badge-flash mb-4">
             Limited Time
           </span>
           <h2 className="text-3xl md:text-4xl font-bold mb-3">Summer Sale — Up to 20% Off</h2>
@@ -457,7 +562,7 @@ const Newsletter = () => {
     <FadeIn>
       <section className="mx-6 md:mx-auto max-w-4xl mb-14">
         <div className="bg-gray-900 rounded-2xl px-8 py-12 text-center text-white shadow-xl">
-          <span className="inline-block bg-yellow-400 text-gray-900 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
+          <span className="badge-section badge-top mb-4">
             Exclusive Offer
           </span>
           <h2 className="text-2xl md:text-3xl font-bold mb-2">Get 10% Off Your First Order</h2>
@@ -501,18 +606,20 @@ const HomeComponent = () => (
     <FeaturedCategories />
     <TrendingSlider />
     <FlashSale />
+    <SpecialDeals />
     <BestSellers />
     <PromoBanner />
+    <div className="section-divider" />
 
     {/* All Products section */}
-    <section className="max-w-6xl mx-auto px-6 py-14" id="shop">
+    <section className="max-w-6xl mx-auto px-6 py-16" id="shop">
       <SectionHeading title="All Products" sub="Discover our full collection — fashion, electronics, home & more" />
       <ProductCategory />
       <div className="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <SingleProduct />
       </div>
     </section>
-
+    <div className="section-divider" />
     <Testimonials />
     <Newsletter />
   </Fragment>

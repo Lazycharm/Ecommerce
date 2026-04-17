@@ -2,6 +2,7 @@ import React, { Fragment, useState, useEffect, useContext } from "react";
 import { useHistory } from "react-router-dom";
 import { getAllProduct } from "../../admin/products/FetchApi";
 import { HomeContext } from "./index";
+import { LayoutContext } from "../index";
 import { isWishReq, unWishReq, isWish } from "./Mixins";
 
 const apiURL = process.env.REACT_APP_API_URL;
@@ -23,10 +24,25 @@ const SingleProduct = () => {
   const { data, dispatch } = useContext(HomeContext);
   const { products } = data;
   const history = useHistory();
+  const { dispatch: layoutDispatch } = useContext(LayoutContext);
+  const [addedMap, setAddedMap] = useState({});
 
   const [wList, setWlist] = useState(
     JSON.parse(localStorage.getItem("wishList"))
   );
+
+  const quickAdd = (e, item) => {
+    e.stopPropagation();
+    let cart = localStorage.getItem("cart") ? JSON.parse(localStorage.getItem("cart")) : [];
+    if (!cart.some((c) => c.id === item._id)) {
+      cart.push({ id: item._id, quantitiy: 1, price: item.pPrice });
+      localStorage.setItem("cart", JSON.stringify(cart));
+    }
+    const ids = cart.map((c) => c.id);
+    layoutDispatch({ type: "inCart", payload: ids });
+    setAddedMap((prev) => ({ ...prev, [item._id]: true }));
+    setTimeout(() => setAddedMap((prev) => ({ ...prev, [item._id]: false })), 1500);
+  };
 
   useEffect(() => {
     fetchData();
@@ -71,9 +87,9 @@ const SingleProduct = () => {
             : null;
 
           const getBadge = () => {
-            if (item.pOffer) return { label: `-${item.pOffer}%`, bg: "bg-red-500" };
-            if (item.pSold > 80) return { label: "Best Seller", bg: "bg-gray-900" };
-            if (item.pSold < 10) return { label: "New", bg: "bg-green-500" };
+            if (item.pOffer) return { label: `-${item.pOffer}%`, cls: "badge-sale" };
+            if (item.pSold > 80) return { label: "Best Seller", cls: "badge-hot" };
+            if (item.pSold < 10) return { label: "New", cls: "badge-new" };
             return null;
           };
           const badge = getBadge();
@@ -91,7 +107,7 @@ const SingleProduct = () => {
               >
                 <img
                   loading="lazy"
-                  className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-107"
+                  className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-500"
                   style={{ transform: "scale(1)" }}
                   onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.07)")}
                   onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
@@ -101,7 +117,7 @@ const SingleProduct = () => {
 
                 {/* Badge */}
                 {badge && (
-                  <span className={`absolute top-2 left-2 ${badge.bg} text-white text-xs font-bold px-2.5 py-1 rounded-full`}>
+                  <span className={`badge-product ${badge.cls} absolute top-2 left-2`}>
                     {badge.label}
                   </span>
                 )}
@@ -156,6 +172,16 @@ const SingleProduct = () => {
                     <span className="text-gray-900 font-bold text-sm">${item.pPrice}</span>
                   )}
                 </div>
+                <button
+                  onClick={(e) => quickAdd(e, item)}
+                  className={`w-full mt-2 py-2 rounded-xl text-xs font-bold tracking-wide transition-all duration-200 ${
+                    addedMap[item._id]
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-900 text-white hover:bg-yellow-400 hover:text-gray-900"
+                  }`}
+                >
+                  {addedMap[item._id] ? "✓ Added" : "Add to Cart"}
+                </button>
               </div>
             </div>
           );
