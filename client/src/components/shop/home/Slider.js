@@ -57,7 +57,7 @@ const Slider = (props) => {
           <img
             className="w-full object-cover"
             style={{ maxHeight: "600px" }}
-            src={`${apiURL}/uploads/customize/${data.sliderImages[slide].slideImage}`}
+            src={`${apiURL}/uploads/customize/${data.sliderImages[slide % data.sliderImages.length].slideImage}`}
             alt="hero"
           />
           <div className="absolute inset-0 bg-black bg-opacity-30 flex flex-col items-center justify-center text-white text-center px-4">
